@@ -82,7 +82,7 @@ venv/
 ENV/
 
 # sublime
-*-workspace
+*.sublime-workspace
 
 # Spyder project settings
 .spyderproject
