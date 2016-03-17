@@ -1,4 +1,10 @@
 import numpy as np
+""" Basic sort algorithm. Requires an array of similar objects and that
+the objects be sortable i.e the objects must have __cmp__ or __lt__
+implementation"
+
+Selection sort, Insertion sort, Merge sort and Quick sort.
+"""
 
 
 def is_sortable(obj):

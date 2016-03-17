@@ -1,7 +1,9 @@
 {
 	"settings":
-	{ 
-	   "python_interpreter": "/Users/nishpan/Library/Enthought/Canopy_64bit/User/bin/python"
+	{
+	   "python_interpreter": "/Users/nishpan/Library/Enthought/Canopy_64bit/User/bin/python",
+       "validate_imports": true,
+       "pep257": false
 
 	}
 }

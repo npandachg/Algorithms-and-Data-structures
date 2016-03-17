@@ -1,5 +1,5 @@
-from basicDS import Stack
-from basicDS import Queue
+from AlgoDS.basicDS import Stack
+from AlgoDS.basicDS import Queue
 
 
 s = Stack()

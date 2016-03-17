@@ -81,5 +81,8 @@ celerybeat-schedule
 venv/
 ENV/
 
+# sublime
+*-workspace
+
 # Spyder project settings
 .spyderproject

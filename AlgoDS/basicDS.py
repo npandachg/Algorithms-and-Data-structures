@@ -1,4 +1,7 @@
 # import numpy as np
+""" BASIC data structures : Stack, Queue, Bag, Randomized Bag, Randomized
+stack, Deque (double ended queue). All data structures are iterable.
+"""
 
 
 class NoSuchElement(Exception):

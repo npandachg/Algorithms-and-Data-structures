@@ -1,6 +1,6 @@
 # from basicSort import Selection
 # from basicSort import Insertion
-from basicSort import MergeSort
+from AlgoDS.basicSort import MergeSort
 
 a = []
 a.append("M")
