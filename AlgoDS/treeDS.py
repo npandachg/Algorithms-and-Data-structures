@@ -42,19 +42,19 @@ class UnOrderedSeqST(object):
         self._size = 0
 
     def _put(self, key, value):
-            """ puts the key value pair. If key is in the ST, replace
-            its value, otherwise add it to the head
-            """
-            node_with_key = self._check_key(key, self._head)
-            if node_with_key is None:
-                # add a new key value pair
-                old_head = self._head
-                self._head = UnOrderedSeqST._Node(key, value, old_head)
-            else:
-                # update the key with new value
-                node_with_key.value = value
-            # update size
-            self._size += 1
+        """ puts the key value pair. If key is in the ST, replace
+        its value, otherwise add it to the head
+        """
+        node_with_key = self._check_key(key, self._head)
+        if node_with_key is None:
+            # add a new key value pair
+            old_head = self._head
+            self._head = UnOrderedSeqST._Node(key, value, old_head)
+        else:
+            # update the key with new value
+            node_with_key.value = value
+        # update size
+        self._size += 1
 
     def _get(self, key):
         """ returns the value associated with the key. if key does not
@@ -118,6 +118,7 @@ class BinarySearchST(object):
     3) __contains__(key)       -> checks to see if key is in the ST.
     4) size()                  -> returns size of ST
     """
+
     def __init__(self):
         self._keys = np.empty([1], dtype=object)
         self._vals = np.empty([1], dtype=object)
@@ -125,8 +126,8 @@ class BinarySearchST(object):
 
     def _resize(self):
         # create temp arrays
-        arr_k = np.empty([2*len(self._keys)], dtype=object)
-        arr_v = np.empty([2*len(self._vals)], dtype=object)
+        arr_k = np.empty([2 * len(self._keys)], dtype=object)
+        arr_v = np.empty([2 * len(self._vals)], dtype=object)
         # copy key, val arrays
         arr_k[0:len(self._keys)] = self._keys
         arr_v[0:len(self._vals)] = self._vals
@@ -145,7 +146,7 @@ class BinarySearchST(object):
         partition [lo mid-1] mid [mid+1, high]. For a full search
         lo = 0, high = size-1
         """
-        mid = lo + int((high - lo)/2)
+        mid = lo + int((high - lo) / 2)
 
         # base case
         if high <= lo:
@@ -157,7 +158,7 @@ class BinarySearchST(object):
                 return
             elif key > arr[lo]:
                 key_flag.append(False)
-                key_flag.append(lo+1)
+                key_flag.append(lo + 1)
                 return
             else:
                 key_flag.append(True)
@@ -165,9 +166,9 @@ class BinarySearchST(object):
                 return
 
         if key < arr[mid]:
-            self._check_key(key_flag, key, arr, lo, mid-1)
+            self._check_key(key_flag, key, arr, lo, mid - 1)
         elif key > arr[mid]:
-            self._check_key(key_flag, key, arr, mid+1, high)
+            self._check_key(key_flag, key, arr, mid + 1, high)
         else:
             key_flag.append(True)
             key_flag.append(mid)
@@ -185,7 +186,7 @@ class BinarySearchST(object):
 
         key_flag = []
 
-        self._check_key(key_flag, key, self._keys, 0, self._size-1)
+        self._check_key(key_flag, key, self._keys, 0, self._size - 1)
 
         rank = key_flag[1]
         key_exists = key_flag[0]
@@ -197,8 +198,8 @@ class BinarySearchST(object):
                 self._resize()
             # move over to insert the key, value pair
             for k in range(self._size, rank, -1):
-                self._keys[k] = self._keys[k-1]
-                self._vals[k] = self._vals[k-1]
+                self._keys[k] = self._keys[k - 1]
+                self._vals[k] = self._vals[k - 1]
             # insert the key, value pair
             self._keys[rank] = key
             self._vals[rank] = val
@@ -209,7 +210,7 @@ class BinarySearchST(object):
         If key is not there, returns None.
         """
         key_in_st = []
-        self._check_key(key_in_st, key, self._keys, 0, self._size-1)
+        self._check_key(key_in_st, key, self._keys, 0, self._size - 1)
         if key_in_st[0]:
             return self._vals[key_in_st[1]]
         else:
@@ -226,7 +227,7 @@ class BinarySearchST(object):
 
     def __contains__(self, key):
         key_in_st = []
-        self._check_key(key_in_st, key, self._keys, 0, self._size-1)
+        self._check_key(key_in_st, key, self._keys, 0, self._size - 1)
         return key_in_st[0]
 
     def keys(self):
@@ -241,10 +242,96 @@ class BinarySearchST(object):
         return self._size
 
 
+class BST(object):
+    """Binary search tree using linked list. Balance is not guranteed,
+    use with caution. For a genreal balanced BST, use the BBST.
+    Definition : A BST is a binary tree where each node has a comparable
+    key with the following property : a key in any node is larger than
+    all the keys in its left subtree and smaller than all the keys in
+    its right subtree. Thus,
+    a BST is :
+    a) either empty
+    b) node that points to 2 BST -> left and right with the above property.
+    """
 
+    class _Node(object):
+        """inner node class that contains the key, value, link to left
+        subtree and a link to right subtree and the size of the tree
+        rooted at this node which is size of left tree + size of
+        right tree + 1
+        """
 
+        def __init__(self, key, val, left=None, right=None, size=0):
+            self.key = key
+            self.val = val
+            self.left = left
+            self.right = right
+            self.size = size
 
+    def __init__(self):
+        """ construct a bst with a null root, size zero """
+        self._root = None
 
+    def _put(self, put_node, key, val):
+        """ recursively put a key value pair according to the following recipie:
+        a) if put_node is None, then create a node object at put_node and
+        return it
+        b) else :
+        if key < key at put_node, call the function with put_node.left,
+        if key > key at put_node, call the function with put_node.right,
+        else update the put_node.val = val
+        """
+        # write the base case first
+        if put_node is None:
+            put_node = BST._Node(key, val, size=1)
+        elif key < put_node.key:
+            put_node.left = self._put(put_node.left, key, val)
+        elif key > put_node.key:
+            put_node.right = self._put(put_node.right, key, val)
+        else:
+            put_node.val = val
+        put_node.size = self._size(put_node.left) + \
+            self._size(put_node.right) + 1
+        return put_node
 
+    def _get(self, key, start_node):
+        """ returns the value associated with the key with a recursive
+        search. If key is not found, return None.
+        check if key is in the start node, if so return it. Else, if key is
+        less than the key at the start_node check in the left subtree;
+        otherwise check in the right subtree
+        """
 
+        # base case
+        if start_node is None:
+            return None
+
+        if key < start_node.key:
+            return self._get(key, start_node.left)
+        elif key > start_node.key:
+            return self._get(key, start_node.right)
+        else:
+            return start_node.val
+
+    def _size(self, node):
+        if node is None:
+            return 0
+        else:
+            return node.size
+
+    def __contains__(self, key):
+        """ checks if key is in the search tree """
+        if self._get(key, self._root) is None:
+            return False
+        else:
+            return True
+
+    def __setitem__(self, key, val):
+        self._root = self._put(self._root, key, val)
+
+    def __getitem__(self, key):
+        return self._get(key, self._root)
+
+    def size(self):
+        return self._size(self._root)
 

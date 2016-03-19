@@ -19,6 +19,7 @@ st['E'] = 12
 
 # print "here"
 print 's' in st
+print st.size()
 
 print st['E']
 
