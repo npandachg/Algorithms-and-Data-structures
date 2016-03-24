@@ -83,19 +83,6 @@ class Stack(object):
             self.current = self.current.next
             return item
 
-    @staticmethod
-    def test():
-        txt_file = open("tobe.txt", 'r')
-        s = Stack()
-        for lines in txt_file:
-            val = lines.split()
-            for string in val:
-                if string != '-':
-                    s.push(string)
-                else:
-                    s.pop()
-        print (str(s.size()) + " left on stack")
-
 
 class Queue(object):
     """Create a Queue data structure using linked list FIFO
@@ -176,19 +163,6 @@ class Queue(object):
             item = self.current.item
             self.current = self.current.next
             return item
-
-    @staticmethod
-    def test():
-        txt_file = open("tobe.txt", 'r')
-        s = Queue()
-        for lines in txt_file:
-            val = lines.split()
-            for string in val:
-                if string != '-':
-                    s.enqueue(string)
-                else:
-                    s.pop()
-        print (str(s.size()) + " left on stack")
 
 
 class Bag(object):

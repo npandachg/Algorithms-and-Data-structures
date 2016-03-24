@@ -244,7 +244,7 @@ class BinarySearchST(object):
 
 class BST(object):
     """Binary search tree using linked list. Balance is not guranteed,
-    use with caution. For a genreal balanced BST, use the BBST.
+    use with caution. For a general balanced BST, use the BBST.
     Definition : A BST is a binary tree where each node has a comparable
     key with the following property : a key in any node is larger than
     all the keys in its left subtree and smaller than all the keys in
@@ -269,7 +269,7 @@ class BST(object):
             self.size = size
 
     def __init__(self):
-        """ construct a bst with a null root, size zero """
+        """ construct a bst with a null root"""
         self._root = None
 
     def _put(self, put_node, key, val):
@@ -319,6 +319,99 @@ class BST(object):
         else:
             return node.size
 
+    def _min(self, node):
+        """ recursively search left to find the min """
+        if node is None:
+            return None
+        if node.left is None:
+            return node.key
+        else:
+            return self._min(node.left)
+
+    def _max(self, node):
+        """ recursively search right to find the max """
+        if node is None:
+            return None
+        if node.right is None:
+            return node.key
+        else:
+            return self._max(node.right)
+
+    def _floor(self, key, node):
+        """ returns the largest key in the bst that is smaller or equal
+        than key. If node is None return None. If key is smaller than
+        key at node, then floor must be in left subtree. If key is larger
+        than the key at node, then floor could be in the right subtree
+        provided there is a smaller key. If not, floor is the node.
+        """
+
+        if node is None:
+            return None
+        if key < node.key:
+            return self._floor(key, node.left)
+        if key > node.key:
+            temp = self._floor(key, node.right)
+            if temp is None:
+                return node
+            else:
+                return temp
+        if key == node.key:
+            return node
+
+    def _ceiling(self, key, node):
+        """ returns the smallest key in the bst that is larger or equal
+        than key. If node is None return None. If key is larger than
+        key at node, then floor must be in right subtree. If key is smaller
+        than the key at node, then ceiling could be in the left subtree
+        provided there is a larger key. If not, floor is the node.
+        """
+        if node is None:
+            return None
+        if key > node.key:
+            return self._ceiling(key, node.right)
+        if key < node.key:
+            temp = self._ceiling(key, node.left)
+            if temp is None:
+                return node
+            else:
+                return temp
+        if key == node.key:
+            return node
+
+    def _select(self, rank, node):
+        """ returns the key with the given rank, that is the the
+        key with rank number of keys lower than it """
+
+        if node is None:
+            return None
+        elif rank < self._size(node.left):
+            return self._select(rank, node.left)
+        elif rank > self._size(node.left):
+            size_left = self._size(node.left)
+            return self._select(rank - (size_left + 1), node.right)
+        else:
+            return node
+
+    def _rank(self, key, node):
+        """ return the rank of the key i.e the number of keys lesser than
+        it in the bst """
+
+        if node is None:
+            return 0
+        elif key < node.key:
+            return self._rank(key, node.left)
+        elif key > node.key:
+            return self._rank(key, node.right) + 1 + self._size(node.left)
+        else:
+            return self._size(node.left)
+
+    def _keys(self, iterable, node):
+        if node is None:
+            return
+        self._keys(iterable, node.left)
+        iterable.enqueue(node.key)
+        self._keys(iterable, node.right)
+
     def __contains__(self, key):
         """ checks if key is in the search tree """
         if self._get(key, self._root) is None:
@@ -334,4 +427,55 @@ class BST(object):
 
     def size(self):
         return self._size(self._root)
+
+    def is_empty(self):
+        return self.size() == 0
+
+    def min(self):
+        """ returns the min of the bst """
+        return self._min(self._root)
+
+    def max(self):
+        """ returns the max of the bst """
+        return self._max(self._root)
+
+    def floor(self, key):
+        """ returns the largest key in bst smaller than or equal
+        to key
+        """
+        node = self._floor(key, self._root)
+        if node is None:
+            return None
+        else:
+            return node.key
+
+    def ceiling(self, key):
+        """ returns the smallest key in bst larger/equal to the
+        key
+        """
+        node = self._ceiling(key, self._root)
+        if node is None:
+            return None
+        else:
+            return node.key
+
+    def select(self, rank):
+        """ returns they key of given rank """
+        node = self._select(rank, self._root)
+        if node is None:
+            return None
+        else:
+            return node.key
+
+    def rank(self, key):
+        """ returns the rank of the given key """
+        return self._rank(key, self._root)
+
+    def keys(self):
+        """ returns a queue of keys in sorted order """
+        queue_of_keys = Queue()
+        self._keys(queue_of_keys, self._root)
+        return queue_of_keys
+
+
 
