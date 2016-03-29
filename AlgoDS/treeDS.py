@@ -420,6 +420,8 @@ class BST(object):
             return True
 
     def __setitem__(self, key, val):
+        if not is_comparable(key):
+            raise NotComparable("key is not comparable")
         self._root = self._put(self._root, key, val)
 
     def __getitem__(self, key):

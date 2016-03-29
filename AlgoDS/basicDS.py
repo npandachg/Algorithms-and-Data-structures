@@ -166,7 +166,7 @@ class Queue(object):
 
 
 class Bag(object):
-    """Create a Bag data structure using linked list LIFO
+    """Create a Bag data structure using linked list
 
     arguments: None
     attributes:
