@@ -6,17 +6,23 @@ from AlgoDS.graphs import ConnectedComponents
 from AlgoDS.graphs import DirectedGraph
 from AlgoDS.graphs import DetectCycle
 from AlgoDS.graphs import TopologicalOrder
+from AlgoDS.graphs import TopologicalSort
+from AlgoDS.graphs import StrongCC
+from AlgoDS.basicDS import Queue
+import numpy as np
 import fileinput
 
 
 def test_graphs_Graph():
     """ test the constructor """
+    print "test constructor for undirected Graph\n"
     G = Graph.read_from_file(fileinput.input("tinyG.txt"))
     print G
 
 
 def test_graphs_DFS():
     """ test the DFS class """
+    print "test DFS\n"
     G = Graph.read_from_file(fileinput.input("tinyG.txt"))
     source = []
     source.append(0)
@@ -34,6 +40,7 @@ def test_graphs_DFS():
 
 def test_graphs_BFS():
     """ test the BFS class """
+    print "test BFS\n"
     G = Graph.read_from_file(fileinput.input("tinyG.txt"))
     source = []
     source.append(0)
@@ -53,21 +60,18 @@ def test_graphs_BFS():
 
 def test_graphs_CC():
     """ test the Connected Components Class """
+    print "test ConnectedComponents\n"
     G = Graph.read_from_file(fileinput.input("tinyG.txt"))
     cc = ConnectedComponents(G)
 
     print cc.get_count()
     print cc.are_connected(0, 9)
 
-    cc2 = ConnectedComponents(G, "BFS")
-    print cc2.get_count()
-    print cc2.are_connected(0, 9)
-
 
 def test_graphs_DirectedGraph():
     """ test the constructor for DiG"""
+    print " test DirectedGraph\n"
     G = DirectedGraph.read_from_file(fileinput.input("tinyDG.txt"))
-    # G = Graph(fileinput.input("tinyG.txt"))
     print G
     R = G.reverse()
     print R
@@ -80,6 +84,8 @@ def test_graphs_DirectedGraph():
 
 def test_graphs_DetectCycle():
     """ test detect cycle method """
+
+    print " DetectCycle\n"
     G = DirectedGraph.read_from_file(fileinput.input("tinyDG.txt"))
     dcycle = DetectCycle(G)
 
@@ -91,10 +97,36 @@ def test_graphs_DetectCycle():
 def test_graphs_TopologicalOrder():
     """ test Topological order in DAG """
 
-    G = DirectedGraph.read_from_file(fileinput.input("tinyDAG.txt"))
-    t_sort = TopologicalOrder(G, "post")
-    for v in t_sort.get_order():
+    print " TopologicalOrder\n"
+    G = DirectedGraph.read_from_file(fileinput.input("digraph2.txt"))
+    top_order = TopologicalOrder(G)
+    for v in top_order.get_order():
         print v
+
+
+def test_graphs_SCC():
+    """ test StrongCC """
+    print "StrongCC\n"
+
+    G = DirectedGraph.read_from_file(fileinput.input("tinyDG.txt"))
+    scc = StrongCC(G)
+    print scc.get_count()
+    components = np.empty([scc.get_count()], dtype=object)
+
+    for index in range(scc.get_count()):
+        components[index] = Queue()
+
+    for v in range(G.get_v()):
+        id_v = scc.get_id(v)
+        components[id_v].enqueue(v)
+
+    for index in range(scc.get_count()):
+        print "\n"
+        for v in components[index]:
+            print v,
+
+
+
 
 
 

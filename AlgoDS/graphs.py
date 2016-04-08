@@ -1,6 +1,9 @@
-"""Graph module for UndirectedGraphs, DirectedGraphs, etc. The vertex
-are assumed to be integers. Use symbol table to map integers to
-a given vertex description.
+"""Graph module for Graph Data structure : UndirectedGraphs,
+DirectedGraphs, etc and Graph processing classes: Search,
+ConnectedComponents etc.
+
+The verticies are assumed to be integers. Use symbol table
+to map integers to a given vertex description.
 
 Graph : A set of vertices and a collection of edges that each
 connect a pair of vertices. We allow self loops (edge that con
@@ -23,7 +26,7 @@ Path: A sequence of vertices connected by edges.
 
 Simple Path: A path with no repeated vertices.
 
-Cycle: A closed path with whose first and last vertices
+Cycle: A closed path whose first and last vertex
 are same.
 
 Length: Number of edges in a cycle or path.
@@ -38,6 +41,7 @@ class GraphReadError(Exception):
     pass
 
 
+# Graph data structures
 class Graph(object):
     """Undirected Graph API """
 
@@ -110,9 +114,13 @@ class DirectedGraph(Graph):
         return R
 
 
+# Graph processing classes
 class Search(object):
     """Template Search API for Graphs. All search objects will inherit
     from this class.
+    Given a list of source verticies, what verticies are
+    connected to each source vertex? Is there a path from a
+    given vertex v to any one of the source vertex?
     """
     def __init__(self, G, source):
         """ Create an array marked, of length equal to number of
@@ -162,38 +170,35 @@ class Search(object):
 
 
 class ConnectedComponents(object):
-    """ Gives the connected components of a undirected graph.
+    """ Gives the connected components of an undirected graph.
+    Use DFS to find connected components.
     """
-    def __init__(self, G, search_type="DFS"):
+    def __init__(self, G, order=None):
         self.id = np.zeros([G.get_v()], dtype=int)
-        if search_type == "BFS":
-            search_obj = BFS(G, range(G.get_v()), self.id)
-        else:
-            search_obj = DFS(G, range(G.get_v()), self.id)
+        self.order = order
+        if order is None:
+            self.order = range(G.get_v())
+        search_obj = DFS(G, self.order, self.id)
         self.count = search_obj.get_count()
 
     def are_connected(self, v, w):
-        """ Are v and w connected """
+        """ Are v and w connected/strongly connected"""
         return self.id[v] == self.id[w]
 
     def get_count(self):
         """ Number of connected components """
         return self.count
 
-    def id(self, v):
+    def get_id(self, v):
         """ return the component id of vertex v """
         return self.id[v]
 
 
 class DFS(Search):
-    """DFS search class for a Graph object. Given a list of
-    source verticies, what verticies are connected to each
-    source vertex? Is there a path from a given vertex v to any
-    one of the source vertex? Use Depth first search to
-    answer this.
+    """D(epth)F(irst)S(earch) search class for a Graph object.
     """
     def __init__(self, G, source, id=None, order="reverse"):
-        """ create a DFS object by inheriting from Search class
+        """ create a DFS object by inheriting from Search class.
         count variable is the number of distinct components connected
         to source.
         """
@@ -213,7 +218,7 @@ class DFS(Search):
     def dfs(self, G, s, id):
         """ Depth first search. Mark s as visited, then
         recursively visit the verticies adjacent to s, ignoring
-        the vertex which has been marked before
+        the vertex which has been marked before.
         """
         if self.order_type == "pre":
             self.order.enqueue(s)
@@ -239,8 +244,8 @@ class DFS(Search):
 
 
 class BFS(Search):
-    """BFS search class for a Graph object. BFS returns
-    the shortest path to the source.
+    """B(readth)F(irst)S(earch) search class for a Graph object.
+    BFS returns the shortest path to the source.
     """
     def __init__(self, G, source, id=None):
         super(BFS, self).__init__(G, source)
@@ -258,7 +263,8 @@ class BFS(Search):
         """ Start BFS search. In BFS, the queue contains
         vertices at 0 distance from the source, then vertices
         adjacent to the source, then vertices adjacent to the adjacent
-        adjacent vertices and so on.
+        adjacent vertices and so on. Thus BFS gives us the
+        shortest path.
         """
         while not dist_from_src.is_empty():
             # take out item from the queue
@@ -295,6 +301,7 @@ class DetectCycle(object):
         self.on_stack[v] = True
         self.marked[v] = True
         for w in G.adjacent_to(v):
+            # if we found cycle, no need to continue
             if self.cycle is not None:
                 return
             # if not marked do depth search
@@ -318,21 +325,58 @@ class DetectCycle(object):
 
 
 class TopologicalOrder(object):
-    """Topological sort of a DAG"""
-    def __init__(self, G, ord_type):
+    """Topological sort of a DAG: pre, post or reverse post"""
+    def __init__(self, G, ord_type="reverse"):
         order_types = ["pre", "post", "reverse"]
-        self.order = None
+
         if ord_type not in order_types:
             raise GraphReadError("order should be : pre, post\
              or reverse")
-        check_cycle = DetectCycle(G)
-        if check_cycle.get_cycle() is not None:
-            raise GraphReadError("Graph is not DAG")
         dfs = DFS(G, range(G.get_v()), order=ord_type)
+
         self.order = dfs._get_order()
 
     def get_order(self):
         return self.order
+
+
+class TopologicalSort(object):
+    """sort DAG based on topological order i.e
+    given a digraph, put the vertices in an order such that
+    all its directed edges point from a vertex earlier in the
+    order to a vertex later in the order.
+    """
+    def __init__(self, G):
+        check_cycle = DetectCycle(G)
+        self.sortable = False
+        if check_cycle.get_cycle() is None:
+            self.sortable = True
+            self.top_order = TopologicalOrder(G)
+
+    def sort(self):
+        if self.sortable:
+            return self.top_order.get_order()
+        else:
+            return None
+
+    def is_DAG(self):
+        return self.sortable
+
+
+class StrongCC(ConnectedComponents):
+    """strongly connected components of a directed Graph.
+    Two vertices v, w are strongly connected if there is a
+    directed path from v to w and from w to v. Strong connectivity
+    partitions the graph into equivalance class given by the
+    relation : connected to.
+
+    """
+    def __init__(self, G):
+        top_order = TopologicalOrder(G.reverse())
+        super(StrongCC, self).__init__(G, order=top_order.get_order())
+
+
+
 
 
 
