@@ -34,6 +34,8 @@ Length: Number of edges in a cycle or path.
 from AlgoDS.basicDS import Bag
 from AlgoDS.basicDS import Stack
 from AlgoDS.basicDS import Queue
+import collections
+from sets import Set
 import numpy as np
 
 
@@ -99,6 +101,7 @@ class DirectedGraph(Graph):
     directed edges. Each directed edge connects an ordered pair of
     vertices.
     """
+
     def __init__(self, vertices):
         super(DirectedGraph, self).__init__(vertices)
 
@@ -115,6 +118,39 @@ class DirectedGraph(Graph):
 
 
 # Graph processing classes
+class Degrees(object):
+    """docstring for Degrees"""
+
+    def __init__(self, G):
+        self.in_degree = np.zeros([G.get_v()], dtype=int)
+        self.out_degree = np.zeros([G.get_v()], dtype=int)
+        self.sources = Stack()
+        self.sinks = Stack()
+        for vertex in range(G.get_v()):
+            adjacency = G.adjacent_to(vertex)
+            self.out_degree[vertex] = adjacency.size()
+            for w in adjacency:
+                self.in_degree[w] += 1
+
+        for vertex in range(G.get_v()):
+            if self.in_degree[vertex] == 0:
+                self.sources.push(vertex)
+            if self.out_degree[vertex] == 0:
+                self.sinks.push(vertex)
+
+    def get_sinks(self):
+        return self.sinks
+
+    def get_sources(self):
+        return self.sources
+
+    def get_outdegree(self, v):
+        return self.out_degree[v]
+
+    def get_indegree(self, v):
+        return self.in_degree[v]
+
+
 class Search(object):
     """Template Search API for Graphs. All search objects will inherit
     from this class.
@@ -122,6 +158,7 @@ class Search(object):
     connected to each source vertex? Is there a path from a
     given vertex v to any one of the source vertex?
     """
+
     def __init__(self, G, source):
         """ Create an array marked, of length equal to number of
         vertices in the Graph, of boolean False. marked[v] is true if
@@ -173,6 +210,7 @@ class ConnectedComponents(object):
     """ Gives the connected components of an undirected graph.
     Use DFS to find connected components.
     """
+
     def __init__(self, G, order=None):
         self.id = np.zeros([G.get_v()], dtype=int)
         self.order = order
@@ -197,6 +235,7 @@ class ConnectedComponents(object):
 class DFS(Search):
     """D(epth)F(irst)S(earch) search class for a Graph object.
     """
+
     def __init__(self, G, source, id=None, order="reverse"):
         """ create a DFS object by inheriting from Search class.
         count variable is the number of distinct components connected
@@ -247,6 +286,7 @@ class BFS(Search):
     """B(readth)F(irst)S(earch) search class for a Graph object.
     BFS returns the shortest path to the source.
     """
+
     def __init__(self, G, source, id=None):
         super(BFS, self).__init__(G, source)
         self.count = 0
@@ -283,6 +323,7 @@ class BFS(Search):
 
 class DetectCycle(object):
     """Detect cycle in directed graph"""
+
     def __init__(self, G):
         self.marked = np.zeros([G.get_v()], dtype=bool)
         self.edge_to = np.zeros([G.get_v()], dtype=int)
@@ -323,9 +364,13 @@ class DetectCycle(object):
     def get_cycle(self):
         return self.cycle
 
+    def has_cycle(self):
+        return self.cycle is not None
+
 
 class TopologicalOrder(object):
-    """Topological sort of a DAG: pre, post or reverse post"""
+    """Topological order of a Digraph: pre, post or reverse post"""
+
     def __init__(self, G, ord_type="reverse"):
         order_types = ["pre", "post", "reverse"]
 
@@ -346,6 +391,7 @@ class TopologicalSort(object):
     all its directed edges point from a vertex earlier in the
     order to a vertex later in the order.
     """
+
     def __init__(self, G):
         check_cycle = DetectCycle(G)
         self.sortable = False
@@ -368,30 +414,304 @@ class StrongCC(ConnectedComponents):
     Two vertices v, w are strongly connected if there is a
     directed path from v to w and from w to v. Strong connectivity
     partitions the graph into equivalance class given by the
-    relation : connected to.
+    relation : connected to. The following algorithm is
+    due to Kosaraju and Sharir.
 
     """
+
     def __init__(self, G):
         top_order = TopologicalOrder(G.reverse())
         super(StrongCC, self).__init__(G, order=top_order.get_order())
 
 
+class ShortestAncestralPath(object):
+    """finds the shortest distance to a common ancestor in a
+    directed graph.
+    """
 
+    def __init__(self, G):
+        self.marked = np.zeros([G.get_v()], dtype=bool)
+        self.edge_to = np.zeros([G.get_v()], dtype=int)
+        self.first_source = dict()
+        self.cache = Set()
+        self.cache_col = Set()
+        self.G = G
 
+    def length(self, v, w):
+        if (type(v) == int) and (type(w) == int):
+            if (v in self.cache) and (w in self.cache):
+                return self.min_length
+            else:
+                self._sap_dfs(self.G, v, w)
+                return self.min_length
+        elif (isinstance(v, collections.Iterable)) and \
+                (isinstance(w, collections.Iterable)):
+            self._sap_dfs_collections(self.G, v, w)
+            return self.min_length_col
 
+    def ancestor(self, v, w):
+        if (type(v) == int) and (type(w) == int):
+            if (v in self.cache) and (w in self.cache):
+                return self.common_ancestor
+            else:
+                self._sap_dfs(self.G, v, w)
+                return self.common_ancestor
+        elif (isinstance(v, collections.Iterable)) and \
+                (isinstance(w, collections.Iterable)):
+            self._sap_dfs_collections(self.G, v, w)
+            return self.common_ancestor_col
 
+    def _sap_dfs(self, G, v, w):
+        """ find the common ancestor of v and w that participates
+        in shortest path. Here v, w are int type.
+        Each vertex is an ancestor of itself and hence is 0 distance
+        from itself. Use BFS to find ancestors with minimum length.
+        """
 
+        # create queue to put v as source
+        dist_from_src = Queue()
+        # add v to the queue
+        dist_from_src.enqueue(v)
+        # mark v as visited
+        self.marked[v] = True
 
+        # set up cache data structure
+        self.cache = Set()
+        self.cache.add(v)
+        self.cache.add(w)
 
+        if v == w:
+            self.common_ancestor = v
+            self.min_length = 0
+            return
 
+        """empty dictionary :
+        key : ancestors of v
+        value : length from v
+        """
+        self.first_source = dict()
 
+        # v is an ancestor of itself with length 0
+        self.first_source[v] = 0
 
+        # Start BFS from v
+        while not dist_from_src.is_empty():
+            # take out item from the queue
+            v1 = dist_from_src.pop()
+            # check for vertices adjacent to v1
+            for w1 in G.adjacent_to(v1):
+                # if not marked add them to queue
+                if not self.marked[w1]:
+                    # w1 is ancestor of v!
+                    self.marked[w1] = True
+                    self.edge_to[w1] = v1
+                    # add it to queue
+                    dist_from_src.enqueue(w1)
+                    # find the length frow v to w1
+                    current = w1
+                    length = 0
+                    while not (current == v):
+                        length += 1
+                        current = self.edge_to[current]
+                    # add w1, length as the ancestor of v
+                    self.first_source[w1] = length
 
+        # BFS from w.
+        # First change back self.marked and self.edge_to
+        for v in self.first_source.keys():
+            self.marked[v] = False
+            self.edge_to[v] = 0
 
+        # make common_ancestor none and min_length large
+        common_ancestor = -1
+        min_length = float("inf")
 
+        # add w to queue
+        dist_from_src.enqueue(w)
+        # mark w as True
+        self.marked[w] = True
+        # all ancestors of w are in the stack indx
+        indx = Stack()
+        # w is an ancestor of itself
+        indx.push(w)
+        while not dist_from_src.is_empty():
+            # take out item from the queue
+            v1 = dist_from_src.pop()
 
+            # check if v1 is an ancestor of v
+            if v1 in self.first_source:
+                # v1 is a common ancestor!
+                length = 0
+                # find the length frow w to v1
+                current = v1
+                while not (current == w):
+                    length += 1
+                    current = self.edge_to[current]
+                # check if the total length is smallest
+                tot_length = length + self.first_source[v1]
+                if tot_length < min_length:
+                    common_ancestor = v1
+                    min_length = tot_length
 
+            # check for vertices adjacent to v1
+            for w1 in G.adjacent_to(v1):
+                # if not marked add them to queue
+                if not self.marked[w1]:
+                    self.marked[w1] = True
+                    self.edge_to[w1] = v1
+                    # add it to queue
+                    dist_from_src.enqueue(w1)
+                    indx.push(w1)
 
+        # Change back self.marked and self.edge_to
+        for w in indx:
+            self.marked[w] = False
+            self.edge_to[w] = 0
 
+        # Put common ancestor and min length in instance var for caching!
+        self.common_ancestor = common_ancestor
+        if min_length == float("inf"):
+            self.min_length = -1
+        else:
+            self.min_length = min_length
 
+    def _sap_dfs_collections(self, G, v, w):
+        """ Here v and w are iterable. Allowed data types for
+        v and w are Bag, Queues and Stack.
+        See _sap_dfs. """
+        if not isinstance(v, collections.Iterable):
+            raise GraphReadError("v is not iterable: make it \
+                Bag, Queue or Stack")
 
+        if not isinstance(w, collections.Iterable):
+            raise GraphReadError("w is not iterable: make it \
+                Bag, Queue or Stack")
+
+        # check if v and w are in cache_col
+        if (v in self.cache_col) and (w in self.cache_col):
+            return
+        # set up cache data structure
+        else:
+            self.cache_col = Set()
+            self.cache.add(v)
+            self.cache.add(w)
+
+        """empty dictionary :
+        key : ancestors of v
+        value : length from v
+        """
+        self.first_source = dict()
+
+        # better to use dict if v is large
+        v_set = Set()
+
+        # create queue to put v as source
+        dist_from_src = Queue()
+        for vertex in v:
+            v_set.add(vertex)
+            # add vertex to queue
+            dist_from_src.enqueue(vertex)
+            # mark vertex as visited
+            self.marked[vertex] = True
+            # source vertex are ancestors of themselves and 0 dist
+            self.first_source[vertex] = 0
+
+        # start BFS from v
+        while not dist_from_src.is_empty():
+            # take out item from the queue
+            v1 = dist_from_src.pop()
+            # check for vertices adjacent to v1
+            for w1 in G.adjacent_to(v1):
+                # if not marked add them to queue
+                if not self.marked[w1]:
+                    self.marked[w1] = True
+                    self.edge_to[w1] = v1
+                    # add it to queue
+                    dist_from_src.enqueue(w1)
+                    # find the length frow v to w1
+                    current = w1
+                    length = 0
+                    while current not in v_set:
+                        length += 1
+                        current = self.edge_to[current]
+                    # add w1, length as the ancestor of v
+                    self.first_source[w1] = length
+
+        # BFS from w.
+        # Change back self.marked and self.edge_to arrays
+        for v in self.first_source.keys():
+            self.marked[v] = False
+            self.edge_to[v] = 0
+
+        # make common_ancestor none and min_length large
+        common_ancestor = -1
+        min_length = float("inf")
+
+        # better to use dict if w is large
+        w_set = Set()
+        # create queue to put w as source
+        dist_from_src = Queue()
+        # all ancestors of w
+        indx = Stack()
+
+        common_vert = False
+        for vertex in w:
+            w_set.add(vertex)
+            # add vertex to queue
+            dist_from_src.enqueue(vertex)
+            # mark vertex as visited
+            self.marked[vertex] = True
+            indx.push(vertex)
+            if vertex in v_set:
+                common_vert = True
+                break
+
+        """if v and w share a common vertex
+        then that vertex is the common ancestor
+        with length 0
+        """
+        if common_vert:
+            for vertex in w:
+                self.marked[vertex] = False
+            self.common_ancestor_col = indx.pop()
+            self.min_length_col = 0
+            return
+
+        while not dist_from_src.is_empty():
+            # take out item from the queue
+            v1 = dist_from_src.pop()
+
+            # check if v1 is an ancestor of v
+            if v1 in self.first_source:
+                length = 0
+                # find the length frow w to w1
+                current = v1
+                while current not in w_set:
+                    length += 1
+                    current = self.edge_to[current]
+                # check if the total length is smallest
+                tot_length = length + self.first_source[v1]
+                if tot_length < min_length:
+                    common_ancestor = v1
+                    min_length = tot_length
+
+            # check for vertices adjacent to v1
+            for w1 in G.adjacent_to(v1):
+                # if not marked add them to queue
+                if not self.marked[w1]:
+                    self.marked[w1] = True
+                    self.edge_to[w1] = v1
+                    # add it to queue
+                    dist_from_src.enqueue(w1)
+                    indx.push(w1)
+
+        # Edit again self.marked and self.edge_to
+        for w in indx:
+            self.marked[w] = False
+            self.edge_to[w] = 0
+
+        self.common_ancestor_col = common_ancestor
+        if min_length == float("inf"):
+            self.min_length_col = -1
+        else:
+            self.min_length_col = min_length
