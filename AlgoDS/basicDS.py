@@ -850,8 +850,8 @@ class UnionFind(object):
 
     def are_connected(self, p, q):
         """ are p, q in the same equivalence class """
-        # connected if they have same parent
-        return self.id[p] == self.id[q]
+        # connected if they have same root
+        return self.find(p) == self.find(q)
 
     def find(self, p):
         """ find the root of p """
