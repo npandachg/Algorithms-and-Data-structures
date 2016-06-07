@@ -1,5 +1,6 @@
 from nose.tools import *
 from AlgoDS.graphs import Graph
+from AlgoDS.graphs import EdgeWeightedGraph
 from AlgoDS.graphs import DFS
 from AlgoDS.graphs import BFS
 from AlgoDS.graphs import ConnectedComponents
@@ -9,6 +10,7 @@ from AlgoDS.graphs import TopologicalOrder
 from AlgoDS.graphs import Degrees
 from AlgoDS.graphs import ShortestAncestralPath
 from AlgoDS.graphs import StrongCC
+from AlgoDS.graphs import KruskalMST
 from AlgoDS.basicDS import Queue
 from AlgoDS.basicDS import Bag
 from AlgoDS.basicDS import Stack
@@ -20,6 +22,13 @@ def test_graphs_Graph():
     """ test the constructor """
     print "test constructor for undirected Graph\n"
     G = Graph.read_from_file(fileinput.input("tinyG.txt"))
+    print G
+
+
+def test_graphs_EWG():
+    """ test the constructor """
+    print "test constructor for EW Graph\n"
+    G = EdgeWeightedGraph.read_from_file(fileinput.input("tinyEWG.txt"))
     print G
 
 
@@ -177,8 +186,14 @@ def test_graphs_SAP():
     print "1 ", "5 ", "ancestor = ", sap2.ancestor(2, 1)
 
 
-
-
+def test_graphs_KruskalMST():
+    """ test the constructor """
+    print "test KruskalMST EW Graph\n"
+    G = EdgeWeightedGraph.read_from_file(fileinput.input("tinyEWG.txt"))
+    kmst = KruskalMST(G)
+    for e in kmst.get_mst():
+        print e.either(), e.other(e.either())
+        print "\n"
 
 
 

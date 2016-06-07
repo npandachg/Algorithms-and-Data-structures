@@ -34,6 +34,9 @@ Length: Number of edges in a cycle or path.
 from AlgoDS.basicDS import Bag
 from AlgoDS.basicDS import Stack
 from AlgoDS.basicDS import Queue
+from AlgoDS.basicDS import MinPQ
+from AlgoDS.basicDS import UnionFind
+
 import collections
 from sets import Set
 import numpy as np
@@ -41,6 +44,35 @@ import numpy as np
 
 class GraphReadError(Exception):
     pass
+
+
+# Edge class for edge weighted graph type
+class Edge(object):
+    """Edge class where each edge has a weight associated
+    with it.
+    """
+    def __init__(self, v, w, weight):
+        self.v = v
+        self.w = w
+        self.weight = weight
+
+    def __lt__(self, other):
+        return self.weight < other.weight
+
+    def either(self):
+        """ returns one of the end points
+        """
+        return self.v
+
+    def other(self, v):
+        """ returns the other end point """
+        if v == self.v:
+            return self.w
+        if v == self.w:
+            return self.v
+
+    def get_weight(self):
+        return self.weight
 
 
 # Graph data structures
@@ -115,6 +147,58 @@ class DirectedGraph(Graph):
             for w in self.adjacent_to(vertex):
                 R.add_edge(w, vertex)
         return R
+
+
+class EdgeWeightedGraph(Graph):
+    """Edge Weighted Graph"""
+    def __init__(self, vertices):
+        super(EdgeWeightedGraph, self).__init__(vertices)
+
+    @classmethod
+    def read_from_file(cls, in_stream):
+        """ Reads a Graph from input_stream """
+        lines = in_stream
+        G = cls(int(lines[0]))
+
+        edges = int(lines[1])
+
+        for line in lines:
+            v = int(line.split()[0])
+            w = int(line.split()[1])
+            weight = float(line.split()[2])
+
+            tmp_edge = Edge(v, w, weight)
+            G.add_edge(tmp_edge)
+
+        if edges != G.E:
+            raise GraphReadError("Read Error in Graph")
+
+        return G
+
+    def add_edge(self, e):
+        v = e.either()
+        w = e.other(v)
+        self.adj[v].add(e)
+        self.adj[w].add(e)
+        self.E += 1
+
+    def edges(self):
+        """ return the edges """
+        ed = Bag()
+        for v in range(self.V):
+            for e in self.adj[v]:
+                if e.other(v) > v:
+                    ed.add(e)
+        return ed
+
+    def __str__(self):
+        s = str(self.V) + " vertices " + str(self.E) + " Edges\n"
+        for v in range(self.V):
+            s += str(v) + " : "
+            for e in self.adj[v]:
+                s += str(e.other(v)) + " " + str(e.get_weight()) + " "
+            s += "\n"
+        return s
 
 
 # Graph processing classes
@@ -715,3 +799,41 @@ class ShortestAncestralPath(object):
             self.min_length_col = -1
         else:
             self.min_length_col = min_length
+
+
+class KruskalMST(object):
+    """Minimum Spanning Tree using Kruskal's
+    Algorithm.
+    """
+    def __init__(self, G):
+        """ Put edges in ascending order in a min PQ
+        (acc. to weight). Delete the min edge, if its verticies
+        are connected, ignore if not add edge to MST and
+        union its verticies.
+        """
+
+        self.mst = Queue()
+        self.pq = MinPQ()
+        self.uf = UnionFind(G.get_v())
+
+        # add all edges to PQ
+        for edge in G.edges():
+            self.pq.insert(edge)
+
+        while (not self.pq.is_empty()) \
+                and (self.mst.size() < G.get_v() - 1):
+
+            e = self.pq.delete_min()
+            v = e.either()
+            w = e.other(v)
+
+            if self.uf.are_connected(v, w):
+                continue
+
+            self.uf.union(v, w)
+            self.mst.enqueue(e)
+
+    def get_mst(self):
+        return self.mst
+
+

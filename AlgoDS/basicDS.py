@@ -827,6 +827,12 @@ class UnionFind(object):
     """A union find class for generating partition.
     N sites are indexed 0..N-1. Union(a, b) puts a and b
     in the same equivalence class.
+    API:
+    1) UnionFind(size)           -> construct UF object of given size
+    2) get_connected_components()-> distinct connected objects
+    3) are_connected(p, q)       -> are p, q connected ?
+    4) find(p)                   -> find root of p
+    5) union(p, q)               -> put p, q in same class.
     """
     def __init__(self, size):
         # id[i] is the parent of the site i
